@@ -19,6 +19,9 @@ export async function buildWorkbook(ExcelJS: any, tpl: ArrayBuffer, rows: Row[],
   const snap = (n: number) => ({ h: ws.getRow(n).height, cells: Array.from({ length: LAST }, (_, i) => { const c = ws.getRow(n).getCell(i + 1); return { v: c.value, s: JSON.parse(JSON.stringify(c.style || {})) }; }) });
   const dataRow = snap(3), fmtRow = snap(fmt);
 
+  // Row 1 only explains where each column comes from (Ruby / BOE / CHA Details ...): not part of the output
+  for (let c = 1; c <= LAST; c++) ws.getRow(1).getCell(c).value = null;
+
   [...ws.model.merges].forEach((m: string) => ws.unMergeCells(m));
   for (let r = 3; r <= fmt; r++) for (let c = 1; c <= LAST; c++) { const cell = ws.getRow(r).getCell(c); cell.value = null; cell.style = {}; }
 
