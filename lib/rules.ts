@@ -1,5 +1,5 @@
 export type Ship = { note?: string; shipper?: string; invoiceNo?: string; invoiceDate?: string; qty?: number; usd?: number; grossWeight?: number };
-export type Boe = { boeNo?: string; oocDate?: string; invoiceNo?: string; shipper?: string; exchangeRate?: number; duty?: number; igst?: number; hawb?: string; airline?: string; flight?: string };
+export type Boe = { invoiceNos?: string[]; boeNo?: string; oocDate?: string; invoiceNo?: string; shipper?: string; exchangeRate?: number; duty?: number; igst?: number; hawb?: string; airline?: string; flight?: string };
 export type Cha = { flightText?: string; notes?: string[]; chaName?: string; invoiceNo?: string; invoiceDate?: string; dutyIgst?: number; chargeableWeight?: number; freightRate?: number; totalFreight?: number; clearanceRate?: number; clearance?: number; fuel?: number; demurrage?: number; handling?: number; gst?: number; taxInvoiceTotal?: number; debitNoteTotal?: number; airline?: string; awbs?: string[] };
 export type St = 'OK' | 'ERROR' | 'MISSING';
 export type Chk = { s: St; m: string };
@@ -93,7 +93,7 @@ export function run(supplier: string, ships: Ship[], boes: Boe[], chasIn: Cha[])
     const n1 = norm(shipper), n2 = norm(supplier);
     put('sno', i + 1, ok());
     put('shipper', shipper, !n1 ? miss('Shipper name') : n1.includes(n2) || n2.includes(n1) ? ok('Matches selected supplier') : bad(`Document shows "${shipper}" but selected supplier is "${supplier}"`));
-    put('invNo', invNo, !sh ? bad('No shipper invoice file matched this BOE') : !invNo ? miss('Invoice number') : b.invoiceNo && norm(b.invoiceNo) !== norm(invNo) ? bad(`BOE shows invoice ${b.invoiceNo}`) : ok('Matches BOE'));
+    put('invNo', invNo, (b.invoiceNos?.length ?? 0) > 1 ? bad(`This BOE has items from ${b.invoiceNos!.length} invoices (${b.invoiceNos!.join(', ')}); the sheet expects one invoice per BOE`) : !sh ? bad(`No shipper invoice file matched this BOE (BOE shows invoice ${b.invoiceNo ?? 'not found'})`) : !invNo ? miss('Invoice number') : b.invoiceNo && norm(b.invoiceNo) !== norm(invNo) ? bad(`BOE shows invoice ${b.invoiceNo}`) : ok('Matches BOE'));
     put('invDate', sh?.invoiceDate, !sh?.invoiceDate ? miss('Invoice date') : b.oocDate && sh.invoiceDate > b.oocDate ? bad('Invoice date is after BOE date') : ok());
     put('qty', sh?.qty, pos(sh?.qty, 'Quantity'));
     put('usd', sh?.usd, pos(sh?.usd, 'USD amount'));

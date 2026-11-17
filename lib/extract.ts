@@ -99,7 +99,7 @@ export function parseBoe(pages: Page[]): Boe[] {
       duty: num(firstOf(g, /^Duty\(Rs\.?\)\s*:?$/i)),
       igst: found ? r2(igst) : undefined,
       hawb: firstOf(g, /^HAWB Number\s*:?$/i),
-      airline, flight,
+      airline, flight, invoiceNos: invNos,
     });
   }
   return out;
@@ -206,6 +206,6 @@ export async function extractFile(kind: Kind, f: File): Promise<any[]> {
   if (!pdf) throw new Error('This file must be a PDF');
   const pages = await pdfToPages(buf);
   if (!pages.some(p => p.items.length)) throw new Error('This PDF has no readable text (looks scanned). Use the original PDF from the portal/CHA');
-  if (kind === 'boe') { const r = parseBoe(pages); if (!r.length) throw new Error('No Bill of Entry (CBE-XIII) found in this PDF'); return r; }
-  const r = parseCha(pages); if (!r.length) throw new Error('No CHA tax invoice / debit note found in this PDF'); return r;
+  if (kind === 'boe') { const r = parseBoe(pages); if (!r.length) throw new Error(`No Bill of Entry (CBE-XIII) found in this PDF. Its text starts with: "${pages.flatMap(p => p.lines).slice(0, 4).join(' | ').slice(0, 160)}" (${pages.length} page(s))`); return r; }
+  const r = parseCha(pages); if (!r.length) throw new Error(`No CHA tax invoice / debit note found in this PDF. Its text starts with: "${pages.flatMap(p => p.lines).slice(0, 4).join(' | ').slice(0, 160)}"`); return r;
 }

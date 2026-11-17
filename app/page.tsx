@@ -66,7 +66,9 @@ export default function Home() {
     try {
       const [{ default: ExcelJS }, { buildWorkbook }] = await Promise.all([import('exceljs'), import('../lib/export')]);
       const tpl = await (await fetch('/template.xlsx')).arrayBuffer();
-      const wb = await buildWorkbook(ExcelJS, tpl, rows, withRemarks);
+      const meta = { supplier, total: res?.rows.length ?? rows.length, matched: okRows.length, warnings: res?.warnings ?? [],
+        counts: Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => [COLS.find(z => z[0] === k)![2], n] as [string, number]) };
+      const wb = await buildWorkbook(ExcelJS, tpl, rows, withRemarks, meta);
       const buf = await wb.xlsx.writeBuffer();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = name; a.click();
@@ -77,6 +79,8 @@ export default function Home() {
   const issues = res?.rows.flatMap((r, i) => Object.entries(r.c).filter(([k, x]) => k !== 'remark' && (all || x.s !== 'OK')).map(([k, x]) => ({ i, k, x, v: r.v[k] }))) ?? [];
   const bad = issues.filter(x => x.x.s !== 'OK').length;
   const okRows = res ? matchedRows(res.rows) : [];
+  const counts: Record<string, number> = {};
+  res?.rows.forEach(r => Object.entries(r.c).forEach(([k, x]) => { if (k !== 'remark' && x.s !== 'OK') counts[k] = (counts[k] || 0) + 1; }));
 
   return (
     <main>
@@ -138,6 +142,7 @@ export default function Home() {
               <h2>Attribute-wise remarks ({bad} issue{bad === 1 ? '' : 's'})</h2>
               <label><input type="checkbox" checked={all} onChange={e => setAll(e.target.checked)} /> Show passed checks too</label>
             </div>
+            {bad > 0 && <div className="mu" style={{ margin: '4px 0 10px' }}>Rows affected by attribute: {Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${COLS.find(z => z[0] === k)![2]} (${n})`).join(' · ')}</div>}
             <div className="scroll"><table>
               <thead><tr><th>Row</th><th>Attribute</th><th>Value</th><th>Status</th><th>Remark</th></tr></thead>
               <tbody>{issues.map(({ i, k, x, v }) => { const c = COLS.find(z => z[0] === k)!; return (

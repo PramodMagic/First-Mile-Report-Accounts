@@ -22,4 +22,4 @@ Anything it cannot find is shown as MISSING and is never guessed. Scanned (image
 
 ## Excel format
 The download is built from `public/template.xlsx` (your import sheet: header rows, colours, widths, merged CHA groups, "Format" row).
-To change the layout, replace that file. Keep the header in rows 1-2, one sample data row at row 3 (its styles are copied) and the row whose column A says `Format`.
+To change the layout, replace that file. Keep the header in rows 1-2, one sample data row at row 3 (its styles are copied) and the row whose column A says `Format` (it is removed from the download; only its style is used).
